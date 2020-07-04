@@ -3,17 +3,15 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, serializers, generics, filters
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from .models import User
+#from .permissions import UserPermission
 #from .permissions import IsOwnerOrReadOnly
 from rest_framework.views import APIView
 from django.http import JsonResponse
 from django.contrib.auth import authenticate
-from .serializers import UserSerializer, TokSerializer
-from rest_framework_simplejwt.views import (
-        TokenObtainPairView,
-        TokenRefreshView,
-    )
+from .serializers import UserSerializer
+
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -30,12 +28,18 @@ class UserViewSet(viewsets.ModelViewSet):
         elif self.action == 'list' or self.action == 'destroy':
             permission_classes = [IsAdminUser]
         return [permission() for permission in permission_classes]
-    def get_queryset(self):
-        return User.objects.all()
+
+    def get_object(self):
+        
+        if self.kwargs.get('username', None) == 'me':
+            self.kwargs['username'] = self.request.user.username
+
+        return super(UserViewSet, self).get_object()
 
 
-class Tok(TokenObtainPairView):
-    serializer_class = TokSerializer
+
+#class Tok(TokenObtainPairView):
+ #   serializer_class = TokSerializer
 
 
 #class Tok(APIView):
