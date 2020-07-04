@@ -11,22 +11,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('username', 'id', 'first_name', 'last_name', 'email', 'role', 'bio')
         model = User
 
-    #def create(self, validated_data):
-      #  user = User.objects.create(**validated_data)
-       # user.save() 
-      #  role=self.validated_data.get('role')
-      #  if role == 'admin':
-      #      user.is_staff = True
-       #     user.save()
-      #  elif role == 'moderator':
-       #     user.is_superuser = True
-       #    user.save()
-       # return user
-    
-
-    
-
-
 
 #class TokSerializer(TokenObtainPairSerializer):
     
