@@ -1,31 +1,27 @@
-from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, serializers, generics, filters
-from rest_framework.exceptions import ValidationError
+
+from rest_framework import viewsets, serializers
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from .models import User
-from .permissions import Admin_auth, User_auth, Moderator_auth
-from rest_framework.views import APIView
+from .permissions import ModPerm, AdmPerm, UserPerm
+from .serializers import UserSerializer
+
+
 from django.http import JsonResponse
 from django.contrib.auth import authenticate
-from .serializers import UserSerializer
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.decorators import action
+from rest_framework.views import APIView
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    lookup_field = "username"
-    permission_classes = [Admin_auth]
-    @action(detail=False, permission_classes=[IsAuthenticated], methods=['PATCH', 'GET'])
+    lookup_field = 'username'
+    permission_classes = [AdmPerm]
+
+    @action(detail=False, permission_classes=[UserPerm], methods=['PATCH', 'GET'])
     def me(self, request, *args, **kwargs):
-        #serializer = self.get_serializer(self.request.user)
         serializer = UserSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
-            time_entry = serializer.save()
-
+            serializer.save()
         return Response(serializer.data)
 
 
