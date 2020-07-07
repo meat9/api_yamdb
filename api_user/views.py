@@ -1,32 +1,32 @@
 
+import secrets
 from django.core.mail import send_mail
 from rest_framework import viewsets, serializers
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from .models import User
 from .permissions import ModPerm, AdmPerm, UserPerm
 from .serializers import UserSerializer
+
+
+##############################--Возможно лишнее---#####################
 from rest_framework.permissions import AllowAny
-
-import secrets
-from rest_framework.decorators import api_view, permission_classes
-
 from django.http import JsonResponse
 from django.contrib.auth import authenticate
-from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
-
-
-
+from rest_framework.decorators import permission_classes
+from django.contrib.auth.hashers import make_password
+#######################################################################
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    #lookup_field = 'username'
-    permission_classes = [AllowAny]#############AdmPerm
+    lookup_field = 'username'
+    permission_classes = [AllowAny]#######Перед ревью вернуть######AdmPerm
 
-    @action(detail=False, permission_classes=[AllowAny], methods=['PATCH', 'GET'])###############UserPerm
+    @action(detail=False, permission_classes=[AllowAny], methods=['PATCH', 'GET'])########Перед ревью вернуть#######UserPerm
     def me(self, request, *args, **kwargs):
         serializer = UserSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
@@ -37,17 +37,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 
-
-def sendmail(request):
-    confirm_code = secrets.token_hex(5)
-    send_mail(
-        'Registration',
-        'Your confirmation code is ' + str(confirm_code),
-        'from@example.com',
-        [request.user.email],
-        fail_silently=False,
-    )
-
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -58,9 +49,8 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['access'] = str(refresh.access_token)
 
         # Add extra responses here
-        #data['username'] = self.user.username
         data['email'] = self.user.email
-        #data['groups'] = self.user.groups.values_list('name', flat=True)
+
         return data
 
 
@@ -69,44 +59,22 @@ class MyTokenObtainPairView(TokenObtainPairView):
 
 
 
-    
-    #return HttpResponse('Mail successfully sent')
 
-#class Tok(TokenObtainPairView):
- #   serializer_class = TokSerializer
-
-
-#class Tok(APIView):
-    #permission_classes = (AllowAny,)
-
-    #def post(self, request, *args, **kwargs):
-        #username = request.data['username']
-        #password = request.data['password']
-       # email = request.data['email']
-
-        #user = authenticate(username=username, password=password)
-        #user = authenticate(email=email)
-       #token = jwt.encode(payload, SECRET_KEY).decode('utf-8')
-        #return JsonResponse({'success': 'true', 'token': token, 'user': user})
-        #if user is not None:
-         #   payload = {
-          #      'user_id': user.id,
-           #     'exp': datetime.now(),
-            #    'token_type': 'access'
-            #}
-
-           # user = {
-           #     'user': username,
-           #     'email': user.email,
-           #     'time': datetime.now().time(),
-           #     'userType': 10
-           # }
-
-            #token = jwt.encode(payload, SECRET_KEY).decode('utf-8')
-            #return JsonResponse({'success': 'true', 'token': token, 'user': user})
-
-        #else:
-           # return JsonResponse({'success': 'false', 'msg': 'The credentials provided are invalid.'})
-
-
+class EmailTokenView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        try:
+            User.objects.get(email=email)
+            return Response("Email адрес занят")
+        except User.DoesNotExist:
+            confirm_code = secrets.token_hex(5)
+            User.objects.create_user(email=email, confirm_code=confirm_code, is_active=True)
+            send_mail(
+                'Registration',
+                'Your confirmation code is ' + str(confirm_code),
+                'from@gmail.com',
+                [str(email)],
+                fail_silently=False,
+            )
+            return Response("Код подтверждения выслан вам на почту ")
 
