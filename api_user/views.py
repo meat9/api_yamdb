@@ -5,28 +5,19 @@ from rest_framework import viewsets, serializers
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 from .permissions import ModPerm, AdmPerm, UserPerm
 from .serializers import UserSerializer
 
 
-##############################--Возможно лишнее---#####################
-from rest_framework.permissions import AllowAny
-from django.http import JsonResponse
-from django.contrib.auth import authenticate
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.decorators import permission_classes
-from django.contrib.auth.hashers import make_password
-#######################################################################
-
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
-    permission_classes = [AllowAny]#######Перед ревью вернуть######AdmPerm
+    permission_classes = [AdmPerm]
 
-    @action(detail=False, permission_classes=[AllowAny], methods=['PATCH', 'GET'])########Перед ревью вернуть#######UserPerm
+    @action(detail=False, permission_classes=[UserPerm], methods=['PATCH', 'GET'])
     def me(self, request, *args, **kwargs):
         serializer = UserSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
@@ -34,33 +25,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-
-
-
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
-
-
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    def validate(self, attrs):
-        data = super().validate(attrs)
-        refresh = self.get_token(self.user)
-        data['refresh'] = str(refresh)
-        data['access'] = str(refresh.access_token)
-
-        # Add extra responses here
-        data['email'] = self.user.email
-
-        return data
-
-
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
-
-
-
-
-class EmailTokenView(APIView):
+class EmailCode(APIView):
     def post(self, request):
         email = request.data.get('email')
         try:
@@ -78,3 +43,18 @@ class EmailTokenView(APIView):
             )
             return Response("Код подтверждения выслан вам на почту ")
 
+
+class Get_token(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        confirm_code = request.data.get('confirm_code')
+        try:
+            user = User.objects.get(email=email, confirm_code=confirm_code)
+            def get_tokens_for_user(user):
+                refresh = RefreshToken.for_user(user)
+                token = str(refresh.access_token)
+                return token
+            return Response (("Ваш токен: " + get_tokens_for_user(user)))
+
+        except User.DoesNotExist:
+            return Response("Пользователь не найден или код водтверждения не верный")
