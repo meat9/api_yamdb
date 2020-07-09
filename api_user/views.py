@@ -57,4 +57,4 @@ class Get_token(APIView):
             return Response (("Ваш токен: " + get_tokens_for_user(user)))
 
         except User.DoesNotExist:
-            return Response("Пользователь не найден или код водтверждения не верный")
+            return Response("Пользователь не найден или код подтверждения не верный")
