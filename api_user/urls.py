@@ -1,13 +1,14 @@
 from django.urls import path, include
 from rest_framework import routers
-from rest_framework.authtoken import views
-from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, Get_token, EmailCode
+from api_titles.views import CategoryViewSet, GenreViewSet, TitleViewSet
 
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet, basename='users')
-
+router.register(r'categories', CategoryViewSet)
+router.register(r'genres', GenreViewSet)
+router.register(r'titles', TitleViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
