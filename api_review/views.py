@@ -38,7 +38,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             serializer = ReviewSerializer(data=request.data) 
             if serializer.is_valid(): 
-                serializer.save(author=self.request.userб, title=title)
+                serializer.save(author=self.request.user, title=title)
                 return Response(serializer.data, status=status.HTTP_201_CREATED) 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
