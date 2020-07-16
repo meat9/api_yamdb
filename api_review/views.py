@@ -16,15 +16,24 @@ from rest_framework.decorators import api_view
 class ReviewViewSet(viewsets.ModelViewSet): 
     queryset = Review.objects.all() 
     serializer_class = ReviewSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, ModeratorOrAuthorPerm]
+    def get_permissions(self):
+        permission_classes = []
+        if self.action == 'list':
+            permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+        elif self.action == 'destroy'or self.action == 'create' or self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
+            permission_classes = [ModeratorOrAuthorPerm]
+        return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        if Review.objects.filter(author=self.request.user, title=title).exists():
+        if Review.objects.filter(author=self.request.user).exists():
             raise ValidationError('Оценка уже выставлена')
-        serializer.save(author=self.request.user)
+        if serializer.is_valid(): 
+            serializer.save(author=self.request.user, title=title)            
+            return Response(serializer.data, status=status.HTTP_201_CREATED) 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @api_view(['GET', 'POST']) 
+    @api_view(['GET', 'POST', 'PUT']) 
     def api_review(self, request):
         if not self.request.auth:
             return Response(status=status.HTTP_404_FORBIDDEN)
@@ -32,7 +41,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
             reviews = Review.objects.all()
             serializer = ReviewSerializer(reviews, many=True)
             return Response(serializer.data)
-        elif request.method == 'POST':            
+        elif request.method == 'POST'or request.method == 'PUT':            
             title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))       
             if self.request.data.score not in range (1, 10):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -50,7 +59,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all() 
     serializer_class = CommentSerializer     
     permission_classes = [ 
-        permissions.IsAuthenticated, CommentPermission
+        permissions.AllowAny, CommentPermission
     ] 
 
     def perform_create(self, serializer):
@@ -61,10 +70,3 @@ class CommentViewSet(viewsets.ModelViewSet):
         review = get_object_or_404(Review, pk=self.request.data.get('review_id'))
         return Comment.objects.filter(review=review)
 
-# def get_permissions(self):
-    #     permission_classes = []
-    #     if self.action == 'list':
-    #         permission_classes = [permissions.AllowAny]
-    #     elif self.action == 'destroy'or self.action == 'create' or self.action == 'retrieve' or self.action == 'update' or self.action == 'partial_update':
-    #         permission_classes = [ModeratorOrAuthorPerm]
-    #     return [permission() for permission in permission_classes]
