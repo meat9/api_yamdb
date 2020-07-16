@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import Review, Comment
- 
-# Serializers define the API representation. 
+  
 class ReviewSerializer(serializers.ModelSerializer): 
     author = serializers.SlugRelatedField( 
         read_only=True, 
@@ -9,7 +8,7 @@ class ReviewSerializer(serializers.ModelSerializer):
      ) 
     class Meta: 
         model = Review 
-        fields = ['text', 'author', 'pub_date', 'score', 'id'] 
+        fields = ['id', 'author', 'pub_date', 'score', 'text', 'title'] 
 
 class CommentSerializer(serializers.ModelSerializer): 
     author = serializers.SlugRelatedField( 
@@ -18,5 +17,5 @@ class CommentSerializer(serializers.ModelSerializer):
      ) 
     class Meta:         
         model = Comment 
-        fields = ['id', 'author', 'pub_date', 'review_id']
+        fields = ['id', 'author', 'pub_date', 'review', 'text']
 
