@@ -3,11 +3,12 @@ import secrets
 from django.core.mail import send_mail
 from rest_framework import viewsets, serializers
 from rest_framework.decorators import action, api_view
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
-from .permissions import ModPerm, AdmPerm, UserPerm
+from .permissions import AdminPerm
 from .serializers import UserSerializer
 
 
@@ -15,9 +16,9 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
-    permission_classes = [AdmPerm]
+    permission_classes = [AdminPerm]
 
-    @action(detail=False, permission_classes=[UserPerm], methods=['PATCH', 'GET'])
+    @action(detail=False, permission_classes=[IsAuthenticated], methods=['PATCH', 'GET'])
     def me(self, request, *args, **kwargs):
         serializer = UserSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
@@ -26,6 +27,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class EmailCode(APIView):
+    permission_classes = (AllowAny,)
     def post(self, request):
         email = request.data.get('email')
         try:
@@ -45,6 +47,7 @@ class EmailCode(APIView):
 
 
 class Get_token(APIView):
+    permission_classes = (AllowAny,)
     def post(self, request):
         email = request.data.get('email')
         confirm_code = request.data.get('confirm_code')
