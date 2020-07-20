@@ -8,10 +8,10 @@ from api_review.views import ReviewViewSet, CommentViewSet
 
 
 router = routers.DefaultRouter()
-router.register(r'users', UserViewSet, basename='users')
-router.register(r'categories', CategoryViewSet)
-router.register(r'genres', GenreViewSet)
-router.register(r'titles', TitleViewSet)
+router.register(r'users/', UserViewSet, basename='users')
+router.register(r'categories/', CategoryViewSet)
+router.register(r'genres/', GenreViewSet)
+router.register(r'titles/', TitleViewSet)
 router.register(r'titles/(?P<title_id>\d+)/reviews', ReviewViewSet, basename='reviews')
 router.register(r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments', CommentViewSet, basename='comments')
 
