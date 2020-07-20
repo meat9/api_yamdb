@@ -6,7 +6,6 @@ from .models import Category, Genre, Title
 from .serializers import CategorySerializer, TitleListSerializer, TitleCreateSerializer, GenreSerializer
 from .filters import TitlesFilter
 from api_user.permissions import AdminOrReadPerm, ModeratorOrAuthorPerm
-#from rest_framework import permissions
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
